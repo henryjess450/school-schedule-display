@@ -28,6 +28,21 @@ function allDayKey(date) {
   return utcDayKey(date);
 }
 
+/**
+ * rrule expands a series at a fixed offset from its DTSTART, so an occurrence
+ * on the far side of a daylight-saving change lands an hour out: a 9:40 chapel
+ * service defined in September renders at 8:40 from November onwards. Shift the
+ * occurrence back onto the wall-clock time the series was written with.
+ *
+ * This relies on the process running in the school's timezone, which the
+ * container guarantees via TZ.
+ */
+function keepWallClockTime(occurrence, seriesStart) {
+  const driftMinutes = occurrence.getTimezoneOffset() - seriesStart.getTimezoneOffset();
+  if (!driftMinutes) return occurrence;
+  return new Date(occurrence.getTime() + driftMinutes * 60000);
+}
+
 function isAllDay(component) {
   return component.datetype === 'date' || component.start?.dateOnly === true;
 }
@@ -123,12 +138,18 @@ export function eventsForDay(parsed, target = new Date()) {
       Object.values(component.exdate || {}).map((d) => (isAllDay(component) ? allDayKey(d) : d.getTime()))
     );
 
-    for (const occurrence of occurrences) {
+    for (const rawOccurrence of occurrences) {
+      // All-day series sit at midnight and must not be nudged.
+      const occurrence = isAllDay(component)
+        ? rawOccurrence
+        : keepWallClockTime(rawOccurrence, component.start);
+
       const override = (component.recurrences || {})[dayKey(occurrence)]
         || (component.recurrences || {})[utcDayKey(occurrence)];
       const source = override || component;
 
-      if (excluded.has(isAllDay(component) ? allDayKey(occurrence) : occurrence.getTime())) continue;
+      // EXDATEs are recorded against the un-shifted times rrule produces.
+      if (excluded.has(isAllDay(component) ? allDayKey(rawOccurrence) : rawOccurrence.getTime())) continue;
 
       const start = override ? override.start : occurrence;
       const span = override && override.end
