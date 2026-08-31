@@ -33,5 +33,12 @@
       "match": "chapel",
       "location": "Nave"
     }
-  ]
+  ],
+  "rest": {
+    "enabled": true,
+    "start": "16:00",
+    "end": "07:30",
+    "message": "This display is in rest mode, do not touch.",
+    "timeLabel": "Current Time:"
+  }
 }

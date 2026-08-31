@@ -19,6 +19,10 @@
 
   const now = () => new Date(Date.now() + clockOffsetMs);
 
+  // Opening the board as ?date=YYYY-MM-DD previews a school day. Only used by a
+  // person checking the layout during setup.
+  const previewDate = new URLSearchParams(window.location.search).get('date');
+
   const el = (id) => document.getElementById(id);
 
   /* ---------- theme ---------- */
@@ -59,6 +63,10 @@
     el('updated-label').textContent = theme.labels?.lastUpdated || 'Last Updated:';
     el('managed-by').textContent = theme.footer?.managedBy || '';
     el('contact').textContent = theme.footer?.contact || '';
+
+    el('rest-message').textContent = theme.rest?.message || 'This display is in rest mode, do not touch.';
+    el('rest-managed').textContent = theme.footer?.managedBy || '';
+    el('rest-contact').textContent = theme.footer?.contact || '';
   }
 
   /**
@@ -103,6 +111,53 @@
       month: 'long', day: 'numeric', year: 'numeric', timeZone: displayZone,
     }).format(date);
     return `${formatTime(date)}, ${day}`;
+  }
+
+  /* ---------- rest mode ---------- */
+
+  // "16:00" -> 960 minutes past midnight.
+  function parseClock(value, fallbackMinutes) {
+    const match = /^(\d{1,2}):(\d{2})$/.exec(String(value || '').trim());
+    if (!match) return fallbackMinutes;
+    const hours = Number(match[1]);
+    const minutes = Number(match[2]);
+    if (hours > 23 || minutes > 59) return fallbackMinutes;
+    return hours * 60 + minutes;
+  }
+
+  // Minutes past midnight in the school's timezone, not the browser's.
+  function minutesIntoSchoolDay(date) {
+    const parts = Object.fromEntries(
+      new Intl.DateTimeFormat('en-CA', {
+        hour: '2-digit', minute: '2-digit', hour12: false, timeZone: displayZone,
+      }).formatToParts(date).map((p) => [p.type, p.value])
+    );
+    // Some locales render midnight as hour 24.
+    const hours = Number(parts.hour) % 24;
+    return hours * 60 + Number(parts.minute);
+  }
+
+  function isResting(currentTime) {
+    const rest = theme?.rest;
+    if (!rest || rest.enabled === false) return false;
+
+    const start = parseClock(rest.start, 16 * 60);
+    const end = parseClock(rest.end, 7 * 60 + 30);
+    const minutes = minutesIntoSchoolDay(currentTime);
+
+    // The window runs past midnight, so it wraps rather than being a simple
+    // range: rest from 16:00 until 07:30 the following morning.
+    return start > end
+      ? (minutes >= start || minutes < end)
+      : (minutes >= start && minutes < end);
+  }
+
+  function renderRest(currentTime) {
+    const label = theme?.rest?.timeLabel || 'Current Time:';
+    const time = new Intl.DateTimeFormat('en-CA', {
+      hour: 'numeric', minute: '2-digit', hour12: true, timeZone: displayZone,
+    }).format(currentTime).replace(/[\s.]/g, '').toUpperCase();
+    el('rest-time').textContent = `${label} ${time}`;
   }
 
   /* ---------- rendering ---------- */
@@ -172,16 +227,27 @@
   }
 
   function render() {
-    renderAgenda(now());
+    const currentTime = now();
+
+    // Previewing a specific day is always for a person checking the layout, so
+    // it must not black itself out just because they looked after four o'clock.
+    const resting = !previewDate && isResting(currentTime);
+
+    document.body.classList.toggle('resting', resting);
+    el('app').hidden = resting;
+    el('rest').hidden = !resting;
+
+    if (resting) {
+      renderRest(currentTime);
+      return;
+    }
+
+    renderAgenda(currentTime);
     el('updated-value').textContent = formatUpdated(state.lastUpdated);
     el('offline-flag').hidden = !(state.stale || state.error);
   }
 
   /* ---------- data ---------- */
-
-  // Opening the board as ?date=YYYY-MM-DD previews an upcoming school day.
-  // Only used by a person checking the layout during setup.
-  const previewDate = new URLSearchParams(window.location.search).get('date');
 
   async function loadSchedule() {
     try {
@@ -229,7 +295,6 @@
 
     await loadSchedule();
     el('boot').hidden = true;
-    el('app').hidden = false;
 
     // Webfonts change every metric the fit routine depends on, so measure again
     // once they have actually landed.

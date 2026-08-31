@@ -24,6 +24,9 @@ with the touchscreen switched off, and looks after itself from then on.
   time is already on its own line.
 - Fills in locations the calendar leaves blank, via `locationRules` in the theme
   (chapel services are shown as being in the Nave).
+- Goes into **rest mode** outside school hours — from 4:00pm until 7:30am the
+  next morning the panel is black, showing only the current time and a note that
+  the display is asleep.
 
 ---
 
@@ -97,6 +100,8 @@ Then reboot. The display should come up on its own.
 | Get out of kiosk mode | `Alt+F4`, or `Ctrl+Alt+Del` → Task Manager |
 | Change the wording or colours | Edit `config/theme.json`, then `docker compose restart` |
 | Check an upcoming day | Open `http://localhost:8080/?date=2026-09-18` |
+| See the board outside school hours | Same thing — `?date=` never goes into rest mode |
+| Change the rest hours | Edit `rest` in `config/theme.json` |
 | See what the app thinks is wrong | `http://localhost:8080/healthz` |
 | Read the logs | `docker compose logs -f` |
 | Update after a code change | `git pull` then `docker compose up -d --build` |
@@ -130,7 +135,17 @@ Everything visible is in [`config/theme.json`](config/theme.json):
   // "match" is a case-insensitive pattern tested against the event name.
   "locationRules": [
     { "match": "chapel", "location": "Nave" }
-  ]
+  ],
+
+  // The panel goes black outside these hours. The window wraps past midnight:
+  // rest from 16:00 until 07:30 the following morning.
+  "rest": {
+    "enabled": true,
+    "start": "16:00",
+    "end": "07:30",
+    "message": "This display is in rest mode, do not touch.",
+    "timeLabel": "Current Time:"
+  }
 }
 ```
 
