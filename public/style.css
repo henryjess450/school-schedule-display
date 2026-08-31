@@ -1,0 +1,221 @@
+/* Theme tokens are injected at runtime from config/theme.json; the values here
+   are fallbacks so the board is never unstyled if that fetch fails. */
+:root {
+  --navy: #17265b;
+  --navy-deep: #101b42;
+  --gold: #f0b323;
+  --text: #ffffff;
+  --text-soft: #c3cbe4;
+  --rule: #ffffff;
+  --font-body: 'Segoe UI', system-ui, sans-serif;
+  --font-wordmark: Garamond, Georgia, serif;
+
+  /* One knob for the whole board: everything sizes off the viewport so the
+     layout is identical on a 1080p panel and a 4K one. */
+  --u: 1vw;
+  --pad: 4.2vw;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* Several elements set display:grid/flex, which would otherwise beat the UA
+   rule for the hidden attribute. Keep [hidden] authoritative. */
+[hidden] { display: none !important; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  background: var(--navy);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  /* Kiosk hygiene: no selection, no caret, no pointer. */
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+.boot {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: var(--text-soft);
+  font-size: 2vw;
+}
+
+/* ---------- Stage ---------- */
+
+.stage {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: stretch;
+  height: 100%;
+  padding: var(--pad) calc(var(--pad) * 0.8);
+  gap: calc(var(--u) * 3);
+}
+
+.rule {
+  width: 2px;
+  background: var(--rule);
+  opacity: 0.85;
+  justify-self: center;
+}
+
+/* ---------- Left: the schedule ---------- */
+
+.schedule {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: calc(var(--u) * 2.2);
+  min-height: 0;
+  padding-right: calc(var(--u) * 2);
+}
+
+.heading {
+  margin: 0;
+  font-size: calc(var(--u) * 4.1);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+}
+
+.agenda {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+  overflow: hidden;
+
+  /* The whole list sizes in em off this value, so app.js can fit a busy day by
+     adjusting one number rather than restyling anything. */
+  font-size: calc(var(--u) * 1.72);
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+}
+
+.entry { padding: 0.15em 0; }
+
+.entry-time {
+  font-weight: 400;
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}
+
+.entry-name {
+  font-weight: 400;
+  line-height: 1.45;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.entry-name .detail {
+  text-transform: none;
+  color: var(--text-soft);
+}
+
+/* The event running right now is called out in the school's gold. */
+.entry.is-now .entry-time,
+.entry.is-now .entry-name {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.entry.is-past { opacity: 0.38; }
+
+.entry.is-all-day .entry-time { color: var(--gold); }
+
+.agenda-empty {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: var(--text-soft);
+  font-size: 1.3em;
+  text-align: center;
+}
+
+/* ---------- Right: wordmark and colophon ---------- */
+
+.brand {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  justify-items: center;
+  min-height: 0;
+  padding-left: calc(var(--u) * 2);
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 0;
+}
+
+.wordmark {
+  font-family: var(--font-wordmark);
+  line-height: 1.0;
+  text-align: center;
+  max-width: 100%;
+}
+
+.wordmark-line {
+  font-size: calc(var(--u) * 5.2);
+  font-weight: 500;
+}
+
+.wordmark-suffix {
+  font-size: calc(var(--u) * 2.15);
+  font-weight: 600;
+  font-style: italic;
+  color: var(--gold);
+  margin-top: 0.25em;
+}
+
+.colophon {
+  justify-self: end;
+  text-align: right;
+  color: var(--text);
+  font-size: calc(var(--u) * 0.92);
+  line-height: 1.5;
+}
+
+.colophon p { margin: 0; }
+
+.updated { margin-bottom: 1.6em !important; }
+
+.managed-by { font-weight: 700; }
+
+.contact { font-size: 0.86em; }
+
+.offline-flag {
+  margin-top: 0.9em !important;
+  color: var(--gold);
+  font-weight: 600;
+}
+
+/* Portrait panels stack: wordmark on top, rule, then the day. Every track is
+   assigned explicitly so the reordered children cannot collide. */
+@media (orientation: portrait) {
+  .stage {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr;
+  }
+  .brand { grid-row: 1; grid-template-rows: auto; justify-items: center; padding-left: 0; }
+  .rule { grid-row: 2; width: 100%; height: 2px; justify-self: stretch; }
+  .schedule { grid-row: 3; padding-right: 0; }
+  .colophon { display: none; }
+  .wordmark-line { font-size: calc(var(--u) * 7); }
+  .wordmark-suffix { font-size: calc(var(--u) * 3.6); }
+  .heading { font-size: calc(var(--u) * 6); }
+  .agenda { font-size: calc(var(--u) * 2.6); }
+}

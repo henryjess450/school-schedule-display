@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Today at a glance</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div id="boot" class="boot">Loading today's schedule…</div>
+
+  <main id="app" class="stage" hidden>
+    <section class="schedule">
+      <h1 id="heading" class="heading">Today at a glance:</h1>
+      <ol id="agenda" class="agenda"></ol>
+    </section>
+
+    <div class="rule" aria-hidden="true"></div>
+
+    <section class="brand">
+      <div class="brand-mark">
+        <div id="wordmark" class="wordmark"></div>
+      </div>
+
+      <footer class="colophon">
+        <p class="updated">
+          <span id="updated-label">Last Updated:</span><br>
+          <span id="updated-value"></span>
+        </p>
+        <p id="managed-by" class="managed-by"></p>
+        <p id="contact" class="contact"></p>
+        <p id="offline-flag" class="offline-flag" hidden>Calendar unreachable — showing last known schedule</p>
+      </footer>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+Images placed here are served at /assets/<filename> and are mounted into the
+container, so they can be swapped without rebuilding. The board is text-only
+today; this folder exists for any artwork added later.

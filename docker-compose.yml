@@ -1,0 +1,19 @@
+services:
+  schedule:
+    build: .
+    image: school-schedule-display:latest
+    container_name: school-schedule-display
+    # The display must come back on its own after a power cut or a reboot.
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      TZ: ${TZ:-America/Vancouver}
+      TZ_NAME: ${TZ:-America/Vancouver}
+    volumes:
+      # Live-editable branding: change the theme or drop in a new logo and
+      # restart the container — no rebuild needed.
+      - ./config/theme.json:/app/config/theme.json:ro
+      - ./public/assets:/app/public/assets:ro
