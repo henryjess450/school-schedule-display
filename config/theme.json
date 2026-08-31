@@ -27,5 +27,11 @@
     "lastUpdated": "Last Updated:"
   },
   "highlightCurrent": true,
-  "clockFormat": "12h"
+  "clockFormat": "12h",
+  "locationRules": [
+    {
+      "match": "chapel",
+      "location": "Nave"
+    }
+  ]
 }

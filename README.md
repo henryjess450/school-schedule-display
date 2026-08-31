@@ -19,6 +19,11 @@ with the touchscreen switched off, and looks after itself from then on.
 - Keeps showing the last known schedule if the network drops, with a small
   "Calendar unreachable" note rather than a blank screen.
 - Shrinks the type automatically on a busy day so the whole day always fits.
+- Drops the time out of an event's name when staff have written it there —
+  "CCCS Chapel Service @ 9:40 - 10:10" shows as "CCCS Chapel Service", since the
+  time is already on its own line.
+- Fills in locations the calendar leaves blank, via `locationRules` in the theme
+  (chapel services are shown as being in the Nave).
 
 ---
 
@@ -119,7 +124,13 @@ Everything visible is in [`config/theme.json`](config/theme.json):
     "contact": "Questions or Concerns? cccs@henryjess.ca"
   },
   "colors": { "navy": "#17265b", "gold": "#f0b323", … },
-  "highlightCurrent": true    // gold highlight on the event happening now
+  "highlightCurrent": true,   // gold highlight on the event happening now
+
+  // Fills in a location for events the calendar does not tag with one.
+  // "match" is a case-insensitive pattern tested against the event name.
+  "locationRules": [
+    { "match": "chapel", "location": "Nave" }
+  ]
 }
 ```
 
@@ -184,4 +195,6 @@ list for one day.
 | `public/` | The display itself |
 | `config/theme.json` | All branding |
 | `windows/` | Kiosk setup scripts |
+| `src/format.js` | Tidies event names, applies location rules |
 | `tools/demo-feed.mjs` | Fake calendar for testing |
+| `tools/format-test.mjs` | Checks the name tidying (`node tools/format-test.mjs`) |

@@ -2,6 +2,7 @@ import path from 'node:path';
 import express from 'express';
 import { config, loadTheme } from './config.js';
 import { fetchCalendar, eventsForDay, dayKey } from './calendar.js';
+import { presentEvent } from './format.js';
 
 const app = express();
 
@@ -52,7 +53,16 @@ app.get('/api/schedule', async (req, res) => {
     });
   }
 
-  const events = eventsForDay(parsed, now);
+  // Theme is read per request so branding and location rules can be edited
+  // without restarting; it is a small local file.
+  let locationRules = [];
+  try {
+    locationRules = loadTheme().locationRules || [];
+  } catch (error) {
+    console.error(`[theme] ${error.message}`);
+  }
+
+  const events = eventsForDay(parsed, now).map((event) => presentEvent(event, locationRules));
   res.json({
     date: dayKey(now),
     now: now.toISOString(),
