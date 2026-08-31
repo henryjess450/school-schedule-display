@@ -1,0 +1,53 @@
+CHRIST CHURCH CATHEDRAL SCHOOL - SCHEDULE DISPLAY
+==================================================
+
+TO SET UP THE DISPLAY:
+
+  1. Plug this USB stick into the display PC.
+  2. Double-click  INSTALL.bat
+  3. Click YES when Windows asks for permission.
+  4. Wait. It takes a minute or two, mostly copying files.
+  5. The schedule appears full screen. Unplug the USB stick.
+
+  One thing the installer cannot do for you: set the PC to sign in
+  automatically. Without it, a reboot leaves the panel sitting on the
+  lock screen. Press the Windows key, type  netplwiz , press Enter,
+  untick "Users must enter a user name and password", and enter the
+  password for this account.
+
+
+WHAT IT DOES TO THE PC:
+
+  - Copies the display to C:\CathedralScheduleDisplay
+  - Turns the touchscreen OFF (it is a notice board, not a kiosk)
+  - Stops the PC sleeping and the screen blanking
+  - Turns off notification pop-ups
+  - Starts the display automatically when the PC is switched on
+  - Checks every 5 minutes that it is still running, and restarts it if not
+  - Reboots the PC at 3:30am so Windows Update never interrupts the day
+
+  All of it is undone by UNINSTALL.bat.
+
+
+THE DISPLAY ITSELF:
+
+  Shows today's events from the school's Google Calendar. Add or change
+  an event and the board picks it up within about two minutes. Nobody
+  needs to touch the PC.
+
+  From 4:00pm until 7:30am the screen goes black and says the display is
+  resting.
+
+
+IF SOMETHING LOOKS WRONG:
+
+  Press Alt+F4 to leave full screen.
+
+  Open http://localhost:8080/healthz in a browser. It should say ok.
+
+  Logs are in C:\CathedralScheduleDisplay\logs
+
+  To reinstall, just run INSTALL.bat again. Your settings are kept.
+
+
+Questions or Concerns? cccs@henryjess.ca

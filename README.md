@@ -1,8 +1,9 @@
 # Christ Church Cathedral School — Daily Schedule Display
 
 A wall display that shows today's events from the school's Google Calendar, in
-the school's own branding. Runs in Docker, opens full screen on a Windows PC
-with the touchscreen switched off, and looks after itself from then on.
+the school's own branding. Installs from a USB stick, opens full screen on a
+Windows PC with the touchscreen switched off, and looks after itself from then
+on.
 
 ---
 
@@ -32,83 +33,66 @@ with the touchscreen switched off, and looks after itself from then on.
 
 ## Setting it up on the display PC
 
-You need **Docker Desktop** and **Git** installed, and the PC signed in to the
-account the display will run under.
+The display installs from a USB stick. The PC needs nothing beforehand — no
+Node, no Docker, no internet connection during setup.
 
-### 1. Get the code
+1. Plug the stick in.
+2. Double-click **INSTALL.bat**.
+3. Click **Yes** when Windows asks for permission.
+4. Wait a minute or two while it copies.
+5. The schedule appears full screen. Unplug the stick.
 
-```powershell
-git clone https://github.com/henryjess450/school-schedule-display.git
-cd school-schedule-display
+The installer copies the app to `C:\CathedralScheduleDisplay`, turns the
+touchscreen off, stops the PC sleeping and blanking, silences notification
+pop-ups, and registers three scheduled tasks: launch at logon, a watchdog every
+5 minutes, and a 3:30am reboot so Windows Update never interrupts the school day.
+
+**UNINSTALL.bat** undoes all of it, touchscreen included.
+
+### The one manual step
+
+Set the account to sign in automatically, or a reboot leaves the panel on the
+lock screen. Run `netplwiz`, untick *Users must enter a user name and password*,
+and enter the account's password. A script cannot do this safely.
+
+### Building the stick
+
+```bash
+./tools/build-usb.sh
 ```
 
-### 2. Point it at the calendar
+Assembles `~/Downloads/CathedralScheduleDisplay-USB` — about 105MB, most of it
+the bundled Node runtime. It downloads the official Windows Node build and
+checks it against the published SHA-256 before packaging. Copy the *contents* of
+that folder onto the stick.
 
-```powershell
-copy .env.example .env
-```
+### Running it in Docker instead
 
-`.env.example` already has the school's public calendar URL and the Pacific
-timezone, so unless something has changed there is nothing to edit.
+The Dockerfile and compose file are still here if you would rather run it that
+way on a Linux box or a server:
 
-### 3. Start it
-
-```powershell
+```bash
+cp .env.example .env
 docker compose up -d --build
 ```
-
-Open <http://localhost:8080> to check it. That is the whole application — the
-rest is turning the PC into a kiosk.
-
-### 4. Lock the PC down
-
-Open PowerShell **as Administrator**, in the project folder:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\windows\Install-Kiosk.ps1
-```
-
-That one script:
-
-- disables the touchscreen (the display is information-only),
-- stops the PC sleeping and the screen blanking,
-- silences notification toasts,
-- registers a task that launches the display full screen at logon,
-- registers a watchdog that relaunches it every 5 minutes if it has died,
-- registers a 3:30am reboot so Windows Update never interrupts the school day.
-
-Add `-KeepTouch` if you want to leave touch enabled, or `-Browser Chrome` to use
-Chrome instead of Edge.
-
-### 5. Two things the script cannot do for you
-
-1. **Docker Desktop → Settings → General → "Start Docker Desktop when you log in".**
-   Without this the container will not be running when the display starts.
-2. **Automatic sign-in.** Run `netplwiz`, untick *Users must enter a user name and
-   password*, and enter the account's password. Otherwise a reboot leaves the panel
-   sitting on the lock screen.
-
-Then reboot. The display should come up on its own.
-
----
 
 ## Day-to-day
 
 | I want to… | Do this |
 |---|---|
-| Start it now without rebooting | `schtasks /run /tn SchoolScheduleKiosk` |
+| Start it now without rebooting | `schtasks /run /tn CathedralScheduleDisplay` |
 | Get out of kiosk mode | `Alt+F4`, or `Ctrl+Alt+Del` → Task Manager |
-| Change the wording or colours | Edit `config/theme.json`, then `docker compose restart` |
+| Change the wording or colours | Edit `C:\CathedralScheduleDisplay\config\theme.json` (takes effect on the next refresh) |
 | Check an upcoming day | Open `http://localhost:8080/?date=2026-09-18` |
 | See the board outside school hours | Same thing — `?date=` never goes into rest mode |
 | Change the rest hours | Edit `rest` in `config/theme.json` |
 | See what the app thinks is wrong | `http://localhost:8080/healthz` |
-| Read the logs | `docker compose logs -f` |
-| Update after a code change | `git pull` then `docker compose up -d --build` |
-| Undo the kiosk setup | `.\windows\Uninstall-Kiosk.ps1` as Administrator |
+| Read the logs | `C:\CathedralScheduleDisplay\logs\` |
+| Update the display | Run `INSTALL.bat` from a fresh stick — settings are kept |
+| Undo everything | Double-click `UNINSTALL.bat` |
 
-Nothing needs a rebuild for branding changes — `config/theme.json` and
-`public/assets/` are mounted into the container, so a restart is enough.
+Branding changes need no restart at all: `config/theme.json` is read on every
+request, so an edit shows up on the panel within a couple of minutes.
 
 ---
 
@@ -151,9 +135,9 @@ Everything visible is in [`config/theme.json`](config/theme.json):
 
 The logo is the school's white-and-gold lockup on transparency, so it sits
 directly on the navy. To replace it, drop the new file into `public/assets/`,
-point `logo.image` at it and `docker compose restart` — no rebuild. Keep a PNG
-in `logo.fallback`: it is what renders if the display ever runs a browser
-without AVIF support.
+point `logo.image` at it. On the display PC that folder is
+`C:\CathedralScheduleDisplay\public\assets\`. Keep a PNG in `logo.fallback`:
+it is what renders if the display ever runs a browser without AVIF support.
 
 ---
 
@@ -166,9 +150,12 @@ students can reach the keyboard, Windows can lock it down properly with
 > Settings → Accounts → Other users → Set up a kiosk
 
 Point it at Microsoft Edge in kiosk mode with `http://localhost:8080` as the
-start URL. That account can then run nothing else at all. It replaces step 4
-above rather than adding to it — Docker Desktop must be running under a
-different account, or set to start as a service.
+start URL. That account can then run nothing else at all.
+
+This replaces the logon task rather than adding to it, so the schedule server
+needs starting another way — register `windows\Start-Display.ps1` as a task that
+runs at system startup under SYSTEM, and let Assigned Access handle only the
+browser.
 
 ---
 
@@ -192,7 +179,7 @@ Google Calendar (public .ics)
         │  fetched every 2 min, cached in memory
         ▼
   Node + Express  ──►  /api/schedule   today's events, expanded from recurrence
-   (Docker)       ──►  /api/theme      branding
+ (bundled runtime) ──►  /api/theme      branding
                   ──►  /healthz        used by the kiosk launcher and watchdog
         │
         ▼
@@ -209,7 +196,9 @@ list for one day.
 | `src/calendar.js` | iCal parsing and recurrence expansion |
 | `public/` | The display itself |
 | `config/theme.json` | All branding |
-| `windows/` | Kiosk setup scripts |
+| `windows/` | Kiosk setup scripts run by the installer |
+| `usb/` | The double-click launchers that sit on the stick |
+| `tools/build-usb.sh` | Builds the USB stick |
 | `src/format.js` | Tidies event names, applies location rules |
 | `tools/demo-feed.mjs` | Fake calendar for testing |
 | `tools/format-test.mjs` | Checks the name tidying (`node tools/format-test.mjs`) |

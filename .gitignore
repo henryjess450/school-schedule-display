@@ -2,3 +2,7 @@ node_modules/
 .env
 *.log
 .DS_Store
+
+# Bundled Windows runtime and built USB images — fetched by tools/build-usb.sh
+runtime/
+logs/
