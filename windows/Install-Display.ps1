@@ -61,14 +61,31 @@ foreach ($file in 'package.json', 'README.md') {
     if (Test-Path $from) { Copy-Item -Path $from -Destination $InstallRoot -Force }
 }
 
-# node_modules is large; copy it with robocopy so a slow USB stick shows
-# progress rather than looking hung.
-$modulesSource = Join-Path $SourceRoot 'node_modules'
-if (Test-Path $modulesSource) {
+# Dependencies ship as a single zip. As a loose tree they are 1,553 files and
+# 16MB, which crawls off a cheap USB stick; zipped they are one 3MB read.
+$modulesZip = Join-Path $SourceRoot 'node_modules.zip'
+$modulesTree = Join-Path $SourceRoot 'node_modules'
+$modulesTarget = Join-Path $InstallRoot 'node_modules'
+
+if (Test-Path $modulesZip) {
+    Write-Ok 'Unpacking dependencies...'
+    if (Test-Path $modulesTarget) { Remove-Item $modulesTarget -Recurse -Force }
+    Expand-Archive -Path $modulesZip -DestinationPath $InstallRoot -Force
+} elseif (Test-Path $modulesTree) {
     Write-Ok 'Copying dependencies...'
-    robocopy $modulesSource (Join-Path $InstallRoot 'node_modules') /E /NFL /NDL /NJH /NJS /NP | Out-Null
+    robocopy $modulesTree $modulesTarget /E /NFL /NDL /NJH /NJS /NP | Out-Null
     # robocopy uses exit codes below 8 for success.
     if ($LASTEXITCODE -ge 8) { throw "Copying node_modules failed (robocopy $LASTEXITCODE)." }
+} else {
+    throw 'No dependencies found on the stick (expected node_modules.zip).'
+}
+
+# A truncated copy is worse than an obvious failure: the display would start and
+# then die on a missing module. Check the packages the app actually imports.
+foreach ($package in 'express', 'node-ical', 'rrule', 'uuid') {
+    if (-not (Test-Path (Join-Path $modulesTarget "$package\package.json"))) {
+        throw "Dependencies are incomplete - '$package' is missing. Re-copy the USB stick."
+    }
 }
 Write-Ok 'Files copied.'
 

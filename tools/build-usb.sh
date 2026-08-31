@@ -51,9 +51,14 @@ cp "$REPO_ROOT/usb/INSTALL.bat" "$OUTPUT/"
 cp "$REPO_ROOT/usb/UNINSTALL.bat" "$OUTPUT/"
 cp "$REPO_ROOT/usb/READ ME FIRST.txt" "$OUTPUT/"
 
-for dir in src public config tools windows node_modules; do
+for dir in src public config tools windows; do
   cp -R "$REPO_ROOT/$dir" "$OUTPUT/app/"
 done
+
+# Dependencies travel as one zip rather than 1,500 loose files: a cheap USB
+# stick writes small files at a crawl, and the installer expands it in seconds.
+say "Packing dependencies"
+(cd "$REPO_ROOT" && zip -rq "$OUTPUT/app/node_modules.zip" node_modules -x '*.DS_Store' '._*')
 for file in package.json package-lock.json README.md .env.example; do
   cp "$REPO_ROOT/$file" "$OUTPUT/app/"
 done
@@ -61,6 +66,12 @@ cp "$NODE_EXE" "$OUTPUT/app/runtime/node.exe"
 
 # The stick is for installing, not for building.
 rm -rf "$OUTPUT/app/tools/build-usb.sh"
+
+# macOS writes AppleDouble sidecars onto FAT32 volumes, which look like junk on
+# Windows. Keep them out of the build so a plain drag-and-drop copy stays clean.
+export COPYFILE_DISABLE=1
+find "$OUTPUT" -name '._*' -delete 2>/dev/null || true
+find "$OUTPUT" -name '.DS_Store' -delete 2>/dev/null || true
 
 say "Done"
 du -sh "$OUTPUT"

@@ -61,10 +61,17 @@ and enter the account's password. A script cannot do this safely.
 ./tools/build-usb.sh
 ```
 
-Assembles `~/Downloads/CathedralScheduleDisplay-USB` — about 105MB, most of it
-the bundled Node runtime. It downloads the official Windows Node build and
+Assembles `~/Downloads/CathedralScheduleDisplay-USB` — about 93MB, nearly all of
+it the bundled Node runtime. It downloads the official Windows Node build and
 checks it against the published SHA-256 before packaging. Copy the *contents* of
 that folder onto the stick.
+
+Dependencies travel as a single `node_modules.zip` rather than 1,553 loose
+files. Cheap USB sticks write small files at a crawl — an order of magnitude
+slower than one large file — so the tree is packed here and unpacked on the PC,
+where it is fast. The installer checks the unpacked result actually contains the
+packages the app imports, so a truncated copy fails at install time instead of
+producing a display that starts and then dies.
 
 ### Running it in Docker instead
 
