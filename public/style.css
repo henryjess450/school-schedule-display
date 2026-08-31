@@ -96,7 +96,7 @@ body {
 
   /* The whole list sizes in em off this value, so app.js can fit a busy day by
      adjusting one number rather than restyling anything. */
-  font-size: calc(var(--u) * 1.72);
+  font-size: calc(var(--u) * 2.05);
 
   display: flex;
   flex-direction: column;
@@ -107,20 +107,21 @@ body {
 
 .entry-time {
   font-weight: 400;
-  line-height: 1.45;
+  line-height: 1.5;
   font-variant-numeric: tabular-nums;
 }
 
+/* Event names are shown exactly as they are written in Google Calendar.
+   Upper-casing them made long titles hard to read across a room. */
 .entry-name {
-  font-weight: 400;
-  line-height: 1.45;
-  text-transform: uppercase;
+  font-weight: 500;
+  line-height: 1.5;
   overflow-wrap: anywhere;
 }
 
 .entry-name .detail {
-  text-transform: none;
   color: var(--text-soft);
+  font-weight: 400;
 }
 
 /* The event running right now is called out in the school's gold. */
