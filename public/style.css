@@ -8,7 +8,6 @@
   --text-soft: #c3cbe4;
   --rule: #ffffff;
   --font-body: 'Segoe UI', system-ui, sans-serif;
-  --font-wordmark: Garamond, Georgia, serif;
 
   /* One knob for the whole board: everything sizes off the viewport so the
      layout is identical on a 1080p panel and a 4K one. */
@@ -144,7 +143,7 @@ body {
   text-align: center;
 }
 
-/* ---------- Right: wordmark and colophon ---------- */
+/* ---------- Right: school lockup and colophon ---------- */
 
 .brand {
   display: grid;
@@ -161,24 +160,19 @@ body {
   min-height: 0;
 }
 
-.wordmark {
-  font-family: var(--font-wordmark);
-  line-height: 1.0;
-  text-align: center;
+.brand-mark picture {
+  display: block;
   max-width: 100%;
+  max-height: 100%;
 }
 
-.wordmark-line {
-  font-size: calc(var(--u) * 5.2);
-  font-weight: 500;
-}
-
-.wordmark-suffix {
-  font-size: calc(var(--u) * 2.15);
-  font-weight: 600;
-  font-style: italic;
-  color: var(--gold);
-  margin-top: 0.25em;
+.logo {
+  display: block;
+  width: calc(var(--u) * 46);
+  max-width: 100%;
+  max-height: 100%;
+  height: auto;
+  object-fit: contain;
 }
 
 .colophon {
@@ -203,7 +197,7 @@ body {
   font-weight: 600;
 }
 
-/* Portrait panels stack: wordmark on top, rule, then the day. Every track is
+/* Portrait panels stack: lockup on top, rule, then the day. Every track is
    assigned explicitly so the reordered children cannot collide. */
 @media (orientation: portrait) {
   .stage {
@@ -214,8 +208,7 @@ body {
   .rule { grid-row: 2; width: 100%; height: 2px; justify-self: stretch; }
   .schedule { grid-row: 3; padding-right: 0; }
   .colophon { display: none; }
-  .wordmark-line { font-size: calc(var(--u) * 7); }
-  .wordmark-suffix { font-size: calc(var(--u) * 3.6); }
+  .logo { width: calc(var(--u) * 62); }
   .heading { font-size: calc(var(--u) * 6); }
   .agenda { font-size: calc(var(--u) * 2.6); }
 }

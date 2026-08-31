@@ -110,8 +110,9 @@ Everything visible is in [`config/theme.json`](config/theme.json):
 {
   "heading": "Today at a glance:",
   "logo": {
-    "lines": ["Christ Church", "Cathedral School"],  // one entry per line
-    "suffix": "Junior Kindergarten to Grade 8"       // rendered in gold
+    "image":    "/assets/logo.avif",   // served first
+    "fallback": "/assets/logo.png",    // used if AVIF is unsupported
+    "alt":      "Christ Church Cathedral School — Junior Kindergarten to Grade 8"
   },
   "footer": {
     "managedBy": "Proudly Managed by Cathedral School Alum",
@@ -122,8 +123,11 @@ Everything visible is in [`config/theme.json`](config/theme.json):
 }
 ```
 
-The wordmark is set in type rather than an image, so it stays sharp on any panel
-and needs no asset work if the wording changes.
+The logo is the school's white-and-gold lockup on transparency, so it sits
+directly on the navy. To replace it, drop the new file into `public/assets/`,
+point `logo.image` at it and `docker compose restart` — no rebuild. Keep a PNG
+in `logo.fallback`: it is what renders if the display ever runs a browser
+without AVIF support.
 
 ---
 

@@ -2,11 +2,9 @@
   "schoolName": "Christ Church Cathedral School",
   "heading": "Today at a glance:",
   "logo": {
-    "lines": [
-      "Christ Church",
-      "Cathedral School"
-    ],
-    "suffix": "Junior Kindergarten to Grade 8"
+    "image": "/assets/logo.avif",
+    "fallback": "/assets/logo.png",
+    "alt": "Christ Church Cathedral School \u2014 Junior Kindergarten to Grade 8"
   },
   "footer": {
     "managedBy": "Proudly Managed by Cathedral School Alum",
@@ -14,8 +12,7 @@
   },
   "fonts": {
     "body": "'Poppins', 'Segoe UI', system-ui, sans-serif",
-    "wordmark": "'Cormorant Garamond', Garamond, Georgia, serif",
-    "googleFontsHref": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,600&family=Poppins:wght@400;500;600;700&display=swap"
+    "googleFontsHref": "https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
   },
   "colors": {
     "navy": "#17265b",

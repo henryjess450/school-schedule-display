@@ -35,7 +35,6 @@
       '--text-soft': c.textSoft,
       '--rule': c.rule,
       '--font-body': theme.fonts?.body,
-      '--font-wordmark': theme.fonts?.wordmark,
     };
     for (const [prop, value] of Object.entries(tokens)) {
       if (value) root.setProperty(prop, value);
@@ -51,7 +50,7 @@
     el('heading').textContent = theme.heading || 'Today at a glance:';
     document.title = theme.schoolName ? `${theme.schoolName} — Today at a glance` : 'Today at a glance';
 
-    applyWordmark(theme.logo || {});
+    applyLogo(theme.logo || {});
 
     el('updated-label').textContent = theme.labels?.lastUpdated || 'Last Updated:';
     el('managed-by').textContent = theme.footer?.managedBy || '';
@@ -59,30 +58,19 @@
   }
 
   /**
-   * The board is branded with type rather than an image file, so it stays crisp
-   * on any panel and needs no asset management when the wording changes.
+   * The school's own lockup, served as AVIF with a PNG fallback so it renders
+   * on any browser the display might end up running.
    */
-  function applyWordmark(logo) {
-    const target = el('wordmark');
-    target.innerHTML = '';
+  function applyLogo(logo) {
+    const img = el('logo');
+    const avif = el('logo-avif');
 
-    const lines = Array.isArray(logo.lines) && logo.lines.length
-      ? logo.lines
-      : [theme.schoolName || 'School'];
+    const primary = logo.image || '';
+    const fallback = logo.fallback || primary;
 
-    for (const text of lines) {
-      const line = document.createElement('div');
-      line.className = 'wordmark-line';
-      line.textContent = text;
-      target.appendChild(line);
-    }
-
-    if (logo.suffix) {
-      const suffix = document.createElement('div');
-      suffix.className = 'wordmark-suffix';
-      suffix.textContent = logo.suffix;
-      target.appendChild(suffix);
-    }
+    if (primary && primary !== fallback) avif.srcset = primary;
+    img.src = fallback || primary;
+    img.alt = logo.alt || theme.schoolName || '';
   }
 
   /* ---------- formatting ---------- */
