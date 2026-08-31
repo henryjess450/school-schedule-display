@@ -47,6 +47,10 @@
       document.head.appendChild(link);
     }
 
+    // Adopt the school's timezone straight away, so the very first paint is in
+    // school time even if the calendar itself has not answered yet.
+    if (theme.timezone) displayZone = theme.timezone;
+
     el('heading').textContent = theme.heading || 'Today at a glance:';
     document.title = theme.schoolName ? `${theme.schoolName} — Today at a glance` : 'Today at a glance';
 
@@ -92,27 +96,13 @@
     return `${formatTime(new Date(event.start))} - ${formatTime(new Date(event.end))}`;
   }
 
-  function ordinal(n) {
-    const teens = n % 100;
-    if (teens >= 11 && teens <= 13) return `${n}TH`;
-    return `${n}${['TH', 'ST', 'ND', 'RD'][n % 10] || 'TH'}`;
-  }
-
   function formatUpdated(iso) {
     if (!iso) return '';
     const date = new Date(iso);
-    // Matches the printed layout: "3:03PM, AUGUST 23RD, 2026".
-    const time = new Intl.DateTimeFormat('en-CA', {
-      hour: 'numeric', minute: '2-digit', hour12: true, timeZone: displayZone,
-    }).format(date).replace(/[\s.]/g, '').toUpperCase();
-
-    const parts = Object.fromEntries(
-      new Intl.DateTimeFormat('en-CA', {
-        month: 'long', day: 'numeric', year: 'numeric', timeZone: displayZone,
-      }).formatToParts(date).map((p) => [p.type, p.value])
-    );
-
-    return `${time}, ${parts.month.toUpperCase()} ${ordinal(Number(parts.day))}, ${parts.year}`;
+    const day = new Intl.DateTimeFormat('en-CA', {
+      month: 'long', day: 'numeric', year: 'numeric', timeZone: displayZone,
+    }).format(date);
+    return `${formatTime(date)}, ${day}`;
   }
 
   /* ---------- rendering ---------- */
@@ -201,6 +191,7 @@
 
       if (!response.ok) {
         // Keep whatever is already on screen; just flag it as stale.
+        if (payload.timezone) displayZone = payload.timezone;
         state.error = payload.error || `HTTP ${response.status}`;
         state.stale = true;
         return;

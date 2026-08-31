@@ -50,6 +50,7 @@ app.get('/api/schedule', async (req, res) => {
       error: cache.lastError || 'Calendar unavailable',
       events: [],
       now: now.toISOString(),
+      timezone: config.timezone,
     });
   }
 
@@ -76,7 +77,7 @@ app.get('/api/schedule', async (req, res) => {
 
 app.get('/api/theme', (req, res) => {
   try {
-    res.json(loadTheme());
+    res.json({ ...loadTheme(), timezone: config.timezone });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
