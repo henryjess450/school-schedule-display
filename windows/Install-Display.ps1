@@ -27,6 +27,19 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+trap {
+    Write-Host ''
+    Write-Host '  INSTALL STOPPED at the step above.' -ForegroundColor Red
+    Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host ''
+    Write-Host '  Nothing was left half-configured that matters. You can just' -ForegroundColor Yellow
+    Write-Host '  run INSTALL.bat again. If it keeps stopping here, send a photo' -ForegroundColor Yellow
+    Write-Host '  of this window to cccs@henryjess.ca' -ForegroundColor Yellow
+    Write-Host ''
+    if ($Host.Name -eq 'ConsoleHost') { Read-Host 'Press Enter to close' }
+    exit 1
+}
+
 function Write-Step($message) { Write-Host "`n>> $message" -ForegroundColor Cyan }
 function Write-Ok($message)   { Write-Host "   $message" -ForegroundColor Green }
 function Write-Note($message) { Write-Host "   $message" -ForegroundColor Yellow }
@@ -123,17 +136,30 @@ Write-Ok 'Done.'
 
 # --- 4. Notifications -----------------------------------------------------
 Write-Step 'Silencing notification pop-ups'
-$pushKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\PushNotifications'
-New-Item -Path $pushKey -Force | Out-Null
-Set-ItemProperty -Path $pushKey -Name 'ToastEnabled' -Value 0 -Type DWord
-Write-Ok 'Done.'
+# Cosmetic only. New-Item -Force on an existing key throws, so create it just
+# when it is missing, and never let this step abort the install.
+try {
+    $pushKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\PushNotifications'
+    if (-not (Test-Path $pushKey)) { New-Item -Path $pushKey -Force | Out-Null }
+    Set-ItemProperty -Path $pushKey -Name 'ToastEnabled' -Value 0 -Type DWord
+    Write-Ok 'Done.'
+} catch {
+    Write-Note "Skipped (not essential): $($_.Exception.Message)"
+}
 
 # --- 5. Touchscreen -------------------------------------------------------
 if ($KeepTouch) {
     Write-Step 'Leaving touch input enabled (-KeepTouch)'
 } else {
     Write-Step 'Disabling the touchscreen'
-    & (Join-Path $InstallRoot 'windows\Disable-Touchscreen.ps1')
+    # An unusual digitizer must not stop the display from installing; touch can
+    # always be turned off by hand afterwards.
+    try {
+        & (Join-Path $InstallRoot 'windows\Disable-Touchscreen.ps1')
+    } catch {
+        Write-Note "Could not disable touch automatically: $($_.Exception.Message)"
+        Write-Note 'Turn it off later in Device Manager if needed.'
+    }
 }
 
 # --- 6. Scheduled tasks ---------------------------------------------------
