@@ -9,10 +9,15 @@
 #>
 [CmdletBinding()]
 param(
-    [string]$StatePath = (Join-Path $PSScriptRoot 'touchscreen-state.json')
+    [string]$StatePath
 )
 
 $ErrorActionPreference = 'Stop'
+
+# $PSScriptRoot is empty inside a param() default on Windows PowerShell 5.1 when
+# the script is launched with -File, so resolve the folder here in the body.
+$scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Definition }
+if (-not $StatePath) { $StatePath = Join-Path $scriptDir 'touchscreen-state.json' }
 
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     throw 'This script must be run as Administrator.'

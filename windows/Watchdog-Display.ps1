@@ -12,7 +12,8 @@ param(
     [string]$Browser = 'Edge'
 )
 
-$appRoot = Split-Path $PSScriptRoot -Parent
+$scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Definition }
+$appRoot = Split-Path $scriptDir -Parent
 $processName = if ($Browser -eq 'Chrome') { 'chrome' } else { 'msedge' }
 $profileDir = Join-Path $env:LOCALAPPDATA 'CathedralScheduleKiosk'
 
@@ -27,4 +28,4 @@ $browserUp = [bool](Get-CimInstance Win32_Process -Filter "Name = '$processName.
 if ($serverUp -and $browserUp) { return }
 
 Write-Host "Recovering display (server up: $serverUp, browser up: $browserUp)"
-& (Join-Path $PSScriptRoot 'Start-Display.ps1') -Url $Url -Browser $Browser
+& (Join-Path $scriptDir 'Start-Display.ps1') -Url $Url -Browser $Browser

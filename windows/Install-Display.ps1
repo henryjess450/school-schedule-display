@@ -17,7 +17,7 @@
 #>
 [CmdletBinding()]
 param(
-    [string]$SourceRoot = (Split-Path $PSScriptRoot -Parent),
+    [string]$SourceRoot = '',
     [string]$InstallRoot = 'C:\CathedralScheduleDisplay',
     [string]$Url = 'http://localhost:8080',
     [ValidateSet('Edge', 'Chrome')]
@@ -26,6 +26,11 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+
+# $PSScriptRoot is empty inside a param() default on Windows PowerShell 5.1 with
+# -File, so resolve the source folder here in the body.
+$scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Definition }
+if (-not $SourceRoot) { $SourceRoot = Split-Path $scriptDir -Parent }
 
 trap {
     Write-Host ''

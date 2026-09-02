@@ -7,10 +7,14 @@
 #>
 [CmdletBinding()]
 param(
-    [string]$StatePath = (Join-Path $PSScriptRoot 'touchscreen-state.json')
+    [string]$StatePath
 )
 
 $ErrorActionPreference = 'Stop'
+
+# See Disable-Touchscreen.ps1: resolve the folder in the body, not the param.
+$scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Definition }
+if (-not $StatePath) { $StatePath = Join-Path $scriptDir 'touchscreen-state.json' }
 
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     throw 'This script must be run as Administrator.'

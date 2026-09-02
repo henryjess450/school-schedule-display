@@ -17,7 +17,8 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$appRoot = Split-Path $PSScriptRoot -Parent
+$scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Definition }
+$appRoot = Split-Path $scriptDir -Parent
 
 function Write-Log($message) {
     Write-Host "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $message"
