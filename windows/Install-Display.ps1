@@ -137,6 +137,19 @@ powercfg /change hibernate-timeout-ac 0
 powercfg /change disk-timeout-ac 0
 Set-ItemProperty -Path 'HKCU:\Control Panel\Desktop' -Name 'ScreenSaveActive' -Value '0'
 Set-ItemProperty -Path 'HKCU:\Control Panel\Desktop' -Name 'ScreenSaveTimeOut' -Value '0'
+
+# Edge kiosk does not reliably cover the taskbar on Windows 10, so auto-hide it.
+# Byte 8 of StuckRects3\Settings is the auto-hide flag: 3 = on, 2 = off. Touch
+# is disabled and nothing goes near the screen edge, so it stays hidden.
+try {
+    $sr = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3'
+    $bytes = (Get-ItemProperty -Path $sr -Name Settings).Settings
+    $bytes[8] = 3
+    Set-ItemProperty -Path $sr -Name Settings -Value $bytes
+    Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue
+} catch {
+    Write-Note "Could not auto-hide the taskbar: $($_.Exception.Message)"
+}
 Write-Ok 'Done.'
 
 # --- 4. Notifications -----------------------------------------------------
