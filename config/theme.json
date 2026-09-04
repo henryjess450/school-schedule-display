@@ -24,7 +24,8 @@
   },
   "labels": {
     "emptyDay": "Nothing scheduled today.",
-    "lastUpdated": "Last Updated:"
+    "lastUpdated": "Last Updated:",
+    "comingUp": "Coming up"
   },
   "highlightCurrent": true,
   "clockFormat": "12h",
@@ -39,6 +40,7 @@
     "start": "16:00",
     "end": "07:30",
     "message": "This display is in rest mode, do not touch.",
-    "timeLabel": "Current Time:"
+    "timeLabel": "Current Time:",
+    "restWeekends": true
   }
 }

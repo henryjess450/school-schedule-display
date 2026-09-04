@@ -6,7 +6,7 @@
   const MIN_SCALE = 0.5;                   // how far the agenda may shrink to fit
 
   let theme = null;
-  let state = { events: [], stale: false, error: null, lastUpdated: null, date: null };
+  let state = { events: [], stale: false, error: null, lastUpdated: null, date: null, upcoming: null };
 
   // Every time is rendered in the school's timezone rather than the browser's,
   // so a display whose Windows clock is set to the wrong zone still reads right.
@@ -137,9 +137,21 @@
     return hours * 60 + Number(parts.minute);
   }
 
+  function schoolWeekday(date) {
+    // 0 = Sunday ... 6 = Saturday, in the school's timezone.
+    const name = new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: displayZone }).format(date);
+    return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(name);
+  }
+
   function isResting(currentTime) {
     const rest = theme?.rest;
     if (!rest || rest.enabled === false) return false;
+
+    // Weekends carry no school day, so the board sleeps right through them.
+    if (rest.restWeekends) {
+      const day = schoolWeekday(currentTime);
+      if (day === 0 || day === 6) return true;
+    }
 
     const start = parseClock(rest.start, 16 * 60);
     const end = parseClock(rest.end, 7 * 60 + 30);
@@ -162,12 +174,50 @@
 
   /* ---------- rendering ---------- */
 
+  function renderBanners(events) {
+    const box = el('banners');
+    box.innerHTML = '';
+    const allDay = events.filter((e) => e.allDay);
+    box.hidden = allDay.length === 0;
+    for (const event of allDay) {
+      const banner = document.createElement('div');
+      banner.className = 'banner';
+      banner.textContent = event.location ? `${event.title} — ${event.location}` : event.title;
+      box.appendChild(banner);
+    }
+  }
+
+  // The board shows today; but when today is empty the server hands us the next
+  // day that isn't, so passers-by still see what's coming.
+  function activeDay() {
+    if (state.events.length || !state.upcoming) {
+      return { events: state.events, preview: false, iso: state.now };
+    }
+    return { events: state.upcoming.events, preview: true, iso: state.upcoming.iso };
+  }
+
   function renderAgenda(currentTime) {
+    const day = activeDay();
     const list = el('agenda');
     list.innerHTML = '';
     list.style.fontSize = '';
 
-    if (!state.events.length) {
+    // Heading reflects whether we're showing today or looking ahead.
+    if (day.preview && day.iso) {
+      const label = theme?.labels?.comingUp || 'Coming up';
+      const when = new Intl.DateTimeFormat('en-CA', {
+        weekday: 'long', month: 'long', day: 'numeric', timeZone: displayZone,
+      }).format(new Date(day.iso));
+      el('heading').textContent = `${label} — ${when}`;
+    } else {
+      el('heading').textContent = theme?.heading || 'Today at a glance:';
+    }
+
+    renderBanners(day.events);
+
+    const timed = day.events.filter((e) => !e.allDay);
+
+    if (!day.events.length) {
       const empty = document.createElement('li');
       empty.className = 'agenda-empty';
       empty.textContent = state.error
@@ -177,17 +227,17 @@
       return;
     }
 
-    for (const event of state.events) {
+    // A day of only all-day banners (e.g. a PA day) has nothing for the list.
+    for (const event of timed) {
       const start = new Date(event.start);
       const end = new Date(event.end);
 
       const item = document.createElement('li');
       item.className = 'entry';
-      if (event.allDay) {
-        item.classList.add('is-all-day');
-      } else if (start <= currentTime && end > currentTime) {
+      // "Now"/"past" only make sense for today, not a previewed future day.
+      if (!day.preview && start <= currentTime && end > currentTime) {
         if (theme?.highlightCurrent !== false) item.classList.add('is-now');
-      } else if (end <= currentTime) {
+      } else if (!day.preview && end <= currentTime) {
         item.classList.add('is-past');
       }
 
@@ -275,6 +325,8 @@
       }
       state = {
         events: payload.events || [],
+        upcoming: payload.upcoming || null,
+        now: payload.now,
         stale: Boolean(payload.stale),
         error: null,
         lastUpdated: payload.lastUpdated,
