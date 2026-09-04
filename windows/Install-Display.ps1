@@ -212,8 +212,28 @@ $rebootAction = New-ScheduledTaskAction -Execute 'shutdown.exe' -Argument '/r /t
 $rebootTrigger = New-ScheduledTaskTrigger -Daily -At '03:30'
 Register-ScheduledTask -TaskName 'CathedralScheduleDisplayNightlyReboot' `
     -Action $rebootAction -Trigger $rebootTrigger -Settings $settings `
-    -RunLevel Highest -User 'SYSTEM' -Force | Out-Null
+    -RunLevel Highest -User $user -Force | Out-Null
 Write-Ok 'Tasks registered.'
+
+# --- 6b. Auto-login -------------------------------------------------------
+# So a reboot (including the nightly one) goes straight to the display instead
+# of stopping at the lock screen. This is what was set up by hand on the first
+# machine; doing it here means one less manual step.
+Write-Step 'Auto-login'
+$secure = Read-Host "  Enter the $env:USERNAME password to enable auto-login (leave blank to skip)" -AsSecureString
+$plain = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure))
+if ($plain) {
+    $wl = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon'
+    Set-ItemProperty $wl 'AutoAdminLogon' '1'
+    Set-ItemProperty $wl 'DefaultUserName' $env:USERNAME
+    Set-ItemProperty $wl 'DefaultDomainName' $env:COMPUTERNAME
+    Set-ItemProperty $wl 'DefaultPassword' $plain
+    Write-Ok 'Auto-login enabled for this account.'
+    Write-Note 'The password is stored in the registry (standard for kiosk auto-login);'
+    Write-Note 'keep this a low-privilege account.'
+} else {
+    Write-Note 'Skipped - you can set it later with  netplwiz .'
+}
 
 # --- 7. Start it now ------------------------------------------------------
 Write-Step 'Starting the display'
@@ -224,10 +244,8 @@ Write-Host ''
 Write-Host '  Installed.' -ForegroundColor Green
 Write-Host "  The display should appear within a few seconds at $Url"
 Write-Host ''
-Write-Host '  One thing left to do by hand:' -ForegroundColor White
-Write-Note 'Set this account to sign in automatically, or a reboot will leave'
-Write-Note 'the panel on the lock screen. Run  netplwiz , untick "Users must'
-Write-Note 'enter a user name and password", and enter this account''s password.'
+Write-Host '  It updates itself: on every boot (including the nightly 3:30am' -ForegroundColor White
+Write-Host '  restart) it pulls the latest published version before showing.' -ForegroundColor White
 Write-Host ''
 Write-Host '  To undo everything: run UNINSTALL.bat from the USB stick.' -ForegroundColor DarkGray
 Write-Host ''

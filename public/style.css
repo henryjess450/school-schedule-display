@@ -72,30 +72,10 @@ body {
 
 .schedule {
   display: grid;
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto 1fr;
   gap: calc(var(--u) * 2.2);
   min-height: 0;
   padding-right: calc(var(--u) * 2);
-}
-
-/* All-day items (Picture Day, PA Days, holidays) get their own bold band above
-   the timed list, so a special day stands out instead of reading as one more
-   line. The container collapses entirely when there is nothing all-day. */
-.banners {
-  display: flex;
-  flex-direction: column;
-  gap: calc(var(--u) * 1);
-}
-
-.banner {
-  background: var(--gold);
-  color: var(--navy-deep);
-  font-weight: 700;
-  font-size: calc(var(--u) * 2.1);
-  line-height: 1.2;
-  padding: calc(var(--u) * 1) calc(var(--u) * 1.6);
-  border-radius: calc(var(--u) * 0.8);
-  overflow-wrap: anywhere;
 }
 
 .heading {

@@ -24,8 +24,7 @@
   },
   "labels": {
     "emptyDay": "Nothing scheduled today.",
-    "lastUpdated": "Last Updated:",
-    "comingUp": "Coming up"
+    "lastUpdated": "Last Updated:"
   },
   "highlightCurrent": true,
   "clockFormat": "12h",

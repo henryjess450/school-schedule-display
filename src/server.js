@@ -40,22 +40,6 @@ function requestedDay(value) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-// When today is empty the board would otherwise just say "nothing today", which
-// is how it looks every evening and all weekend. Instead, look ahead for the
-// next day that has anything on it so the board always shows what's coming.
-function findUpcoming(parsed, from, rules, maxDays = 21) {
-  for (let offset = 1; offset <= maxDays; offset += 1) {
-    const day = new Date(from.getTime() + offset * DAY_MS);
-    const events = eventsForDay(parsed, day).map((event) => presentEvent(event, rules));
-    if (events.length) {
-      return { date: dayKey(day), iso: day.toISOString(), events };
-    }
-  }
-  return null;
-}
-
 app.get('/api/schedule', async (req, res) => {
   const parsed = await refreshCalendar();
   const preview = requestedDay(req.query.date);
@@ -80,12 +64,6 @@ app.get('/api/schedule', async (req, res) => {
   }
 
   const events = eventsForDay(parsed, now).map((event) => presentEvent(event, locationRules));
-
-  // Only reach ahead for the real board, never for a specific ?date= preview.
-  const upcoming = (!preview && events.length === 0)
-    ? findUpcoming(parsed, now, locationRules)
-    : null;
-
   res.json({
     date: dayKey(now),
     now: now.toISOString(),
@@ -94,7 +72,6 @@ app.get('/api/schedule', async (req, res) => {
     stale: Boolean(cache.lastError),
     lastUpdated: new Date(cache.fetchedAt).toISOString(),
     events,
-    upcoming,
   });
 });
 

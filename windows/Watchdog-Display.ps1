@@ -28,4 +28,4 @@ $browserUp = [bool](Get-CimInstance Win32_Process -Filter "Name = '$processName.
 if ($serverUp -and $browserUp) { return }
 
 Write-Host "Recovering display (server up: $serverUp, browser up: $browserUp)"
-& (Join-Path $scriptDir 'Start-Display.ps1') -Url $Url -Browser $Browser
+& (Join-Path $scriptDir 'Start-Display.ps1') -Url $Url -Browser $Browser -NoUpdate

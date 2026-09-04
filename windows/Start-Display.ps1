@@ -13,7 +13,8 @@ param(
     [string]$Url = 'http://localhost:8080',
     [int]$HealthTimeoutSeconds = 90,
     [ValidateSet('Edge', 'Chrome')]
-    [string]$Browser = 'Edge'
+    [string]$Browser = 'Edge',
+    [switch]$NoUpdate
 )
 
 $ErrorActionPreference = 'Stop'
@@ -22,6 +23,19 @@ $appRoot = Split-Path $scriptDir -Parent
 
 function Write-Log($message) {
     Write-Host "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $message"
+}
+
+# --- 0. Self-update -------------------------------------------------------
+# Pull the newest published version before starting, so a reboot (including the
+# nightly one) brings the board up to date on its own. Best effort: it only acts
+# when GitHub has a newer commit, and any failure leaves the installed files
+# alone. The watchdog passes -NoUpdate so a crash-restart doesn't re-check.
+if (-not $NoUpdate) {
+    try {
+        & (Join-Path $scriptDir 'Update-Display.ps1')
+    } catch {
+        Write-Log "Update check skipped: $($_.Exception.Message)"
+    }
 }
 
 # --- 1. The server --------------------------------------------------------

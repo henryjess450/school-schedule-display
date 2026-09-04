@@ -30,6 +30,13 @@ Get-CimInstance Win32_Process -Filter "Name = 'msedge.exe' OR Name = 'chrome.exe
     Where-Object { $_.CommandLine -like "*$profileDir*" } |
     ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
 
+Write-Host 'Turning off auto-login'
+try {
+    $wl = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon'
+    Set-ItemProperty $wl 'AutoAdminLogon' '0' -ErrorAction SilentlyContinue
+    Remove-ItemProperty $wl 'DefaultPassword' -ErrorAction SilentlyContinue
+} catch { }
+
 Write-Host 'Restoring power settings'
 powercfg /change monitor-timeout-ac 15
 powercfg /change standby-timeout-ac 30

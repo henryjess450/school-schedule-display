@@ -95,13 +95,27 @@ docker compose up -d --build
 | Change the rest hours | Edit `rest` in `config/theme.json` |
 | See what the app thinks is wrong | `http://localhost:8080/healthz` |
 | Read the logs | `C:\CathedralScheduleDisplay\logs\` |
-| Update the display | Run `INSTALL.bat` from a fresh stick — settings are kept |
+| Update the display | Nothing — it self-updates from the repo on every boot. To force it now, reboot. |
 | Undo everything | Double-click `UNINSTALL.bat` |
 
 Branding changes need no restart at all: `config/theme.json` is read on every
 request, so an edit shows up on the panel within a couple of minutes.
 
 ---
+
+## Auto-update
+
+The display checks the public repo on every boot (including the nightly 3:30am
+restart) and pulls the newest version before it shows anything. It only acts
+when there's a new commit, and any network problem is ignored — it just runs
+what's already installed. So a `git push` to `main` reaches the wall panel by
+the next morning with nobody touching it.
+
+`.env`, the bundled Node runtime and `node_modules` are never overwritten by an
+update. **One caveat:** if a change adds a new npm dependency, an over-the-air
+update can't install it (there's no build step on the PC) — that case needs a
+USB re-flash. The current dependencies are stable, so in practice pushes to
+`main` just work.
 
 ## Branding
 
