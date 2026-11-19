@@ -41,5 +41,12 @@
     "message": "This display is in rest mode, do not touch.",
     "timeLabel": "Current Time:",
     "restWeekends": true
+  },
+  "weather": {
+    "enabled": true,
+    "latitude": 48.4284,
+    "longitude": -123.3656,
+    "days": 4,
+    "label": "Victoria"
   }
 }

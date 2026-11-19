@@ -12,6 +12,8 @@
   // so a display whose Windows clock is set to the wrong zone still reads right.
   let displayZone;
 
+  let weather = null;  // last good forecast from /api/weather
+
   // A kiosk PC that has drifted (or never synced) would otherwise highlight the
   // wrong event. Each poll re-measures the gap between this browser's clock and
   // the server's, and every "now" below is corrected by it.
@@ -259,6 +261,76 @@
     el('offline-flag').hidden = !(state.stale || state.error);
   }
 
+  /* ---------- weather ---------- */
+
+  // WMO weather codes -> a single emoji. Grouped, so every code maps to something.
+  function weatherEmoji(code) {
+    if (code === 0) return '☀️';                       // clear
+    if (code === 1 || code === 2) return '⛅';               // mainly/partly clear
+    if (code === 3) return '☁️';                       // overcast
+    if (code === 45 || code === 48) return '🌫️'; // fog
+    if (code >= 51 && code <= 57) return '🌦️';   // drizzle
+    if (code >= 61 && code <= 67) return '🌧️';   // rain
+    if (code >= 71 && code <= 77) return '❄️';         // snow
+    if (code >= 80 && code <= 82) return '🌧️';   // rain showers
+    if (code === 85 || code === 86) return '🌨️'; // snow showers
+    if (code >= 95) return '⛈️';                       // thunderstorm
+    return '🌤️';                                 // anything else
+  }
+
+  function dayLabel(dateStr, index) {
+    if (index === 0) return 'Today';
+    // Parse as a local date (no timezone shift from the YYYY-MM-DD form).
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Intl.DateTimeFormat('en-CA', { weekday: 'short', timeZone: displayZone })
+      .format(new Date(y, m - 1, d));
+  }
+
+  function renderWeather() {
+    const box = el('weather');
+    const forecast = (weather && weather.forecast) || [];
+    if (!forecast.length) { box.hidden = true; return; }
+
+    box.innerHTML = '';
+    forecast.forEach((day, i) => {
+      const col = document.createElement('div');
+      col.className = 'wx-day';
+
+      const name = document.createElement('div');
+      name.className = 'wx-name';
+      name.textContent = dayLabel(day.date, i);
+
+      const icon = document.createElement('div');
+      icon.className = 'wx-icon';
+      icon.textContent = weatherEmoji(day.code);
+
+      const temps = document.createElement('div');
+      temps.className = 'wx-temps';
+      const hi = document.createElement('span');
+      hi.className = 'wx-hi';
+      hi.textContent = `${day.high}°`;
+      const lo = document.createElement('span');
+      lo.className = 'wx-lo';
+      lo.textContent = `${day.low}°`;
+      temps.append(hi, lo);
+
+      col.append(name, icon, temps);
+      box.appendChild(col);
+    });
+    box.hidden = false;
+  }
+
+  async function loadWeather() {
+    try {
+      const response = await fetch('/api/weather', { cache: 'no-store' });
+      const payload = await response.json();
+      weather = payload && payload.forecast && payload.forecast.length ? payload : weather;
+    } catch {
+      // Keep the last good forecast; never blank the board over weather.
+    }
+    renderWeather();
+  }
+
   /* ---------- data ---------- */
 
   async function loadSchedule() {
@@ -313,8 +385,11 @@
     render();
     if (document.fonts?.ready) document.fonts.ready.then(render);
 
+    loadWeather();
+
     setInterval(render, TICK_MS);
     setInterval(loadSchedule, SCHEDULE_POLL_MS);
+    setInterval(loadWeather, 30 * 60 * 1000);
     window.addEventListener('resize', render);
   }
 

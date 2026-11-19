@@ -75,6 +75,57 @@ app.get('/api/schedule', async (req, res) => {
   });
 });
 
+const weatherCache = { data: null, fetchedAt: 0 };
+const WEATHER_TTL_MS = 30 * 60 * 1000; // conditions move slowly; be kind to the API
+
+async function getWeather() {
+  let cfg;
+  try {
+    cfg = loadTheme().weather || {};
+  } catch {
+    return null;
+  }
+  if (cfg.enabled === false) return null;
+
+  if (weatherCache.data && Date.now() - weatherCache.fetchedAt < WEATHER_TTL_MS) {
+    return weatherCache.data;
+  }
+
+  const lat = Number(cfg.latitude);
+  const lon = Number(cfg.longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  const days = Math.min(Math.max(Number(cfg.days) || 4, 1), 7);
+
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`
+    + `&daily=weather_code,temperature_2m_max,temperature_2m_min`
+    + `&timezone=${encodeURIComponent(config.timezone)}&forecast_days=${days}`;
+
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const raw = await response.json();
+    const daily = raw.daily || {};
+    const forecast = (daily.time || []).map((date, i) => ({
+      date,
+      code: daily.weather_code?.[i],
+      high: Math.round(daily.temperature_2m_max?.[i]),
+      low: Math.round(daily.temperature_2m_min?.[i]),
+    }));
+    weatherCache.data = { label: cfg.label || '', unit: '°', forecast };
+    weatherCache.fetchedAt = Date.now();
+  } catch (error) {
+    console.error(`[weather] ${error.message}`);
+    // Keep any previous good data rather than blanking the panel on one failure.
+  }
+  return weatherCache.data;
+}
+
+app.get('/api/weather', async (req, res) => {
+  const data = await getWeather();
+  if (!data) return res.status(503).json({ forecast: [] });
+  res.json(data);
+});
+
 app.get('/api/theme', (req, res) => {
   try {
     res.json({ ...loadTheme(), timezone: config.timezone });
